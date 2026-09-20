@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import ProcessingModal from '@/components/Admin/ProcessingModal.vue';
 import { Icon } from '@iconify/vue';
 import { useForm } from '@inertiajs/vue3';
 import { onMounted, ref, watch } from 'vue';
@@ -267,21 +266,8 @@ function closeModal() {
                                 <span v-if="form.errors.description" class="error-text">{{ form.errors.description }}</span>
                             </div>
 
-                            <!-- Auto-Transcript Info Banner -->
-                            <div class="auto-transcript-info">
-                                <div class="auto-transcript-icon">
-                                    <Icon icon="lucide:wand-sparkles" width="18" height="18" />
-                                </div>
-                                <div>
-                                    <p class="auto-transcript-title">Naskah Otomatis oleh Sistem</p>
-                                    <p class="auto-transcript-desc">
-                                        Setelah video diunggah, sistem akan otomatis mengekstrak audio dari file MP4 dan mengubahnya menjadi naskah teks. Naskah ini disimpan ke database dan digunakan AI Gemini untuk membuat soal kuis yang akurat.
-                                    </p>
-                                </div>
-                            </div>
-
-                            <!-- Generate Quiz AI Card -->
-                            <div v-if="!editVideo" class="ai-box">
+                             <!-- Generate Quiz AI Card -->
+                             <div v-if="!editVideo" class="ai-box">
                                 <label class="ai-checkbox-label">
                                     <input
                                         v-model="form.generate_quiz"
@@ -321,8 +307,8 @@ function closeModal() {
             </div>
         </Transition>
 
-        <!-- ══ AI PROCESSING MODAL OVERLAY ══ -->
-        <ProcessingModal :show="form.processing && form.generate_quiz" />
+        <!-- ══ UPLOAD / EDIT COMPLETE ══ -->
+        <!-- Note: AI processing (transcript + quiz) now runs asynchronously via queue jobs -->
     </Teleport>
 </template>
 
@@ -436,41 +422,7 @@ function closeModal() {
 .error-text {
     font-size: 11.5px;
     color: #ef4444;
-}
-
-/* Auto-Transcript Info Banner */
-.auto-transcript-info {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    background: linear-gradient(135deg, #f0fdfa 0%, #f0fdf4 100%);
-    border: 1px solid #99f6e4;
-    border-radius: 14px;
-    padding: 14px 16px;
-}
-.auto-transcript-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-    background: #ccfbf1;
-    color: #0d9488;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-.auto-transcript-title {
-    font-size: 13px;
-    font-weight: 700;
-    color: #0f766e;
-    margin: 0 0 4px;
-}
-.auto-transcript-desc {
-    font-size: 11.5px;
-    color: #0d9488;
-    margin: 0;
-    line-height: 1.5;
-}
+ }
 
 /* Upload Error Banner */
 .upload-error-banner {

@@ -12,12 +12,14 @@ const props = defineProps<{
         id: number;
         title: string;
         description: string | null;
+        transcript: string | null;
         dyntube_video_id: string;
         dyntube_iframe_link: string | null;
         dyntube_thumbnail: string | null;
         category_name: string;
         view_count: number;
         quiz_status: string;
+        transcoding_status: string;
         is_published: boolean;
         duration_formatted: string;
         created_at: string;
@@ -158,12 +160,36 @@ function deleteVideo() {
                     <h4 class="section-title">Deskripsi Materi</h4>
                     <p class="desc-text">{{ video.description || 'Tidak ada deskripsi.' }}</p>
 
-                    <div v-if="video.transcript" class="transcript-box">
+                     <div v-if="video.transcript" class="transcript-box">
+                         <h4 class="section-title">
+                             <Icon icon="lucide:file-text" width="16" height="16" class="title-icon" />
+                             Naskah / Transkrip Video (Teks Ucapan Narasi)
+                         </h4>
+                         <div class="transcript-text">{{ video.transcript }}</div>
+                     </div>
+
+                     <div v-else-if="video.quiz_status === 'proses' || video.transcoding_status === 'transcoding'" class="transcript-box transcript-placeholder">
+                         <h4 class="section-title">
+                             <Icon icon="lucide:file-text" width="16" height="16" class="title-icon" />
+                             Naskah / Transkrip Video (Teks Ucapan Narasi)
+                         </h4>
+                         <div class="transcript-text transcript-pending">
+                             <Icon icon="lucide:loader-circle" width="16" height="16" class="spin-icon" />
+                             Naskah sedang diproses di latar belakang...
+                         </div>
+                     </div>
+
+                    <div v-if="video.objectives && video.objectives.length > 0" class="objectives-box">
                         <h4 class="section-title">
-                            <Icon icon="lucide:file-text" width="16" height="16" class="title-icon" />
-                            Naskah / Transkrip / Timeline Video per Menit
+                            <Icon icon="lucide:target" width="16" height="16" class="title-icon" />
+                            Tujuan Pembelajaran / Kisi-kisi
                         </h4>
-                        <pre class="transcript-text">{{ video.transcript }}</pre>
+                        <ul class="objectives-list">
+                            <li v-for="obj in video.objectives" :key="obj.id" class="objective-item">
+                                <Icon icon="lucide:check-circle-2" width="15" height="15" class="obj-icon" />
+                                {{ obj.objective_text }}
+                            </li>
+                        </ul>
                     </div>
                 </div>
             </div>
@@ -227,8 +253,12 @@ function deleteVideo() {
             </div>
         </div>
 
-        <!-- ══ AI PROCESSING MODAL OVERLAY ══ -->
-        <ProcessingModal :show="isGeneratingQuiz" />
+         <!-- ══ AI PROCESSING MODAL OVERLAY ══ -->
+         <ProcessingModal
+             :show="isGeneratingQuiz"
+             title="Kuis AI sedang diproses di latar belakang"
+             description="Permintaan telah dikirim ke antrian. Google Gemini 2.0 Flash akan menganalisis naskah dan membuatkan 6 soal kuis evaluasi."
+         />
 
         <!-- ══ REUSABLE CONFIRM MODAL ══ -->
         <ConfirmModal
@@ -275,13 +305,23 @@ function deleteVideo() {
 .section-title { font-size: 15px; font-weight: 800; color: #0f172a; margin: 0 0 8px; }
 .desc-text { font-size: 14px; color: #475569; line-height: 1.6; margin: 0; }
 
-.transcript-box { margin-top: 20px; padding-top: 16px; border-top: 1px dashed #e2e8f0; }
-.title-icon { color: #0d9488; vertical-align: middle; margin-right: 4px; }
-.transcript-text {
+ .transcript-box { margin-top: 20px; padding-top: 16px; border-top: 1px dashed #e2e8f0; }
+ .title-icon { color: #0d9488; vertical-align: middle; margin-right: 4px; }
+ .transcript-text {
     background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;
     padding: 14px 16px; font-size: 13px; color: #334155; line-height: 1.6;
     font-family: inherit; white-space: pre-wrap; word-break: break-word; margin: 8px 0 0;
 }
+.transcript-pending {
+    display: flex; align-items: center; gap: 8px; color: #64748b; font-style: italic;
+}
+.spin-icon { animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.objectives-box { margin-top: 20px; padding-top: 16px; border-top: 1px dashed #e2e8f0; }
+.objectives-list { list-style: none; padding: 0; margin: 10px 0 0; display: flex; flex-direction: column; gap: 8px; }
+.objective-item { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: #334155; line-height: 1.5; }
+.obj-icon { color: #0d9488; flex-shrink: 0; margin-top: 2px; }
 
 .side-col { display: flex; flex-direction: column; gap: 18px; }
 .side-card { background: #ffffff; border: 1px solid #f1f5f9; border-radius: 18px; padding: 20px; }

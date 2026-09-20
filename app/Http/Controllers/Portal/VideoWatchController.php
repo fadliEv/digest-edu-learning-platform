@@ -30,15 +30,13 @@ class VideoWatchController extends Controller
         if (! $resume) {
             $resume = $video->resumes()->create([
                 'user_id'       => $user->id,
-                'last_position' => 15,
+                'last_position' => 0,
             ]);
-        } elseif ($resume->last_position == 0) {
-            $resume->update(['last_position' => 15]);
         }
 
-        $progress = ($video->duration_seconds && $video->duration_seconds > 0)
+        $progress = ($video->duration_seconds && $video->duration_seconds > 0 && $resume->last_position > 0)
             ? min(100, intval(($resume->last_position / $video->duration_seconds) * 100))
-            : 10;
+            : 0;
 
         // ── Quiz questions ───────────────────────────────────────────────────
         $questions = [];
@@ -80,9 +78,9 @@ class VideoWatchController extends Controller
 
         // ── Video objectives ─────────────────────────────────────────────────
         $objectives = $video->objectives()->get()->map(fn ($obj) => [
-            'id'           => $obj->id,
-            'objective'    => $obj->objective,
-            'order_number' => $obj->order_number,
+            'id'             => $obj->id,
+            'objective_text' => $obj->objective_text,
+            'order_number'   => $obj->order_number,
         ]);
 
         $video->load('category');

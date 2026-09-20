@@ -5,13 +5,22 @@ import { Head, Link } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
 
 // ─── Props ─────────────────────────────────────────────────────────────────
-defineProps<{
+const props = defineProps<{
     canLogin?: boolean;
     canRegister?: boolean;
     auth?: { user?: { name: string } | null };
     showAuthModal?: 'login' | 'register';
     errors?: Record<string, string>;
     name?: string;
+    latestVideos?: {
+        id: number;
+        title: string;
+        category: string;
+        duration: string;
+        views: string;
+        thumbnail: string | null;
+        isNew: boolean;
+    }[];
 }>();
 
 // ─── Auth Modal State ───────────────────────────────────────────────────────
@@ -43,95 +52,13 @@ onMounted(() => {
 const categories = ['Semua', 'Nutrisi', 'Anatomi', 'Pencegahan', 'Penyakit', 'Gaya Hidup'] as const;
 const activeCategory = ref<string>('Semua');
 
-// ─── Video Data ─────────────────────────────────────────────────────────────
-const featuredVideos = [
-    {
-        id: 1,
-        title: 'Mengenal Asupan Serat untuk Lambung',
-        category: 'Nutrisi',
-        categoryClass: 'pill--emerald',
-        duration: '10 Menit',
-        views: '1.240',
-        isNew: true,
-        thumbnail: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=500&h=300&fit=crop',
-    },
-    {
-        id: 2,
-        title: 'Cara Kerja Usus Halus dalam Penyerapan Nutrisi',
-        category: 'Anatomi',
-        categoryClass: 'pill--cyan',
-        duration: '14 Menit',
-        views: '876',
-        isNew: true,
-        thumbnail: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=500&h=300&fit=crop',
-    },
-    {
-        id: 3,
-        title: 'Makanan Fermentasi dan Mikrobioma Usus',
-        category: 'Nutrisi',
-        categoryClass: 'pill--emerald',
-        duration: '11 Menit',
-        views: '654',
-        isNew: false,
-        thumbnail: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500&h=300&fit=crop',
-    },
-    {
-        id: 4,
-        title: 'Sindrom Iritasi Usus Besar: Gejala & Pencegahan',
-        category: 'Penyakit',
-        categoryClass: 'pill--rose',
-        duration: '18 Menit',
-        views: '1.102',
-        isNew: false,
-        thumbnail: 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=500&h=300&fit=crop',
-    },
-    {
-        id: 5,
-        title: 'Kebiasaan Makan yang Merusak Lambung',
-        category: 'Pencegahan',
-        categoryClass: 'pill--amber',
-        duration: '9 Menit',
-        views: '2.341',
-        isNew: true,
-        thumbnail: 'https://images.unsplash.com/photo-1561758033-d89a9ad46330?w=500&h=300&fit=crop',
-    },
-    {
-        id: 6,
-        title: 'Hidrasi Optimal untuk Sistem Pencernaan',
-        category: 'Gaya Hidup',
-        categoryClass: 'pill--teal',
-        duration: '7 Menit',
-        views: '988',
-        isNew: false,
-        thumbnail: 'https://images.unsplash.com/photo-1548839140-29a749e1bc4e?w=500&h=300&fit=crop',
-    },
-    {
-        id: 7,
-        title: 'Peran Hati dalam Metabolisme Lemak',
-        category: 'Anatomi',
-        categoryClass: 'pill--cyan',
-        duration: '13 Menit',
-        views: '542',
-        isNew: true,
-        thumbnail: 'https://images.unsplash.com/photo-1576671081837-49000212a370?w=500&h=300&fit=crop',
-    },
-    {
-        id: 8,
-        title: 'Detoks Alami: Fakta vs Mitos',
-        category: 'Gaya Hidup',
-        categoryClass: 'pill--teal',
-        duration: '12 Menit',
-        views: '1.678',
-        isNew: false,
-        thumbnail: 'https://images.unsplash.com/photo-1628771065518-0d82f1938462?w=500&h=300&fit=crop',
-    },
-];
-
-const filteredVideosList = computed(() =>
-    activeCategory.value === 'Semua'
-        ? featuredVideos
-        : featuredVideos.filter((v) => v.category === activeCategory.value),
-);
+// ─── Video Data (dari DB via props) ─────────────────────────────────────────
+const filteredVideosList = computed(() => {
+    const videos = props.latestVideos ?? [];
+    return activeCategory.value === 'Semua'
+        ? videos
+        : videos.filter((v) => v.category === activeCategory.value);
+});
 
 // ─── Stats ───────────────────────────────────────────────────────────────────
 const stats = [
@@ -221,12 +148,12 @@ const stats = [
                 <div class="hero__deco hero__deco--3"></div>
             </section>
 
-            <!-- ── Materi Terbaru ── -->
+            <!-- ── Video Terbaru ── -->
             <section class="materi">
                 <!-- Section Header -->
                 <div class="materi__header">
                     <div>
-                        <h2 class="materi__title">Materi Terbaru</h2>
+                        <h2 class="materi__title">Video Terbaru</h2>
                         <p class="materi__subtitle">Konten edukasi terkini dari tim ahli kami</p>
                     </div>
                     <button type="button" class="materi__see-all" @click="openLoginModal">
@@ -248,7 +175,7 @@ const stats = [
                 </div>
 
                 <!-- Video Grid -->
-                <div class="video-grid">
+                <div class="video-grid" v-if="filteredVideosList.length > 0">
                     <div
                         v-for="video in filteredVideosList"
                         :key="video.id"
@@ -260,7 +187,16 @@ const stats = [
                     >
                         <!-- Thumbnail -->
                         <div class="video-card__media">
-                            <img :src="video.thumbnail" :alt="video.title" class="video-card__img" loading="lazy" />
+                            <img
+                                v-if="video.thumbnail"
+                                :src="video.thumbnail"
+                                :alt="video.title"
+                                class="video-card__img"
+                                loading="lazy"
+                            />
+                            <div v-else class="video-card__img video-card__img--placeholder">
+                                <Icon icon="lucide:play-circle" width="40" height="40" />
+                            </div>
 
                             <span v-if="video.isNew" class="badge-new">BARU</span>
 
@@ -276,7 +212,7 @@ const stats = [
 
                         <!-- Body -->
                         <div class="video-card__body">
-                            <span :class="['category-pill', video.categoryClass]">
+                            <span class="category-pill pill--emerald">
                                 {{ video.category }}
                             </span>
                             <h3 class="video-card__title">{{ video.title }}</h3>
@@ -286,6 +222,12 @@ const stats = [
                             </p>
                         </div>
                     </div>
+                </div>
+
+                <!-- Empty State -->
+                <div v-else class="video-empty">
+                    <Icon icon="lucide:video-off" width="48" height="48" />
+                    <p>Belum ada video yang tersedia.</p>
                 </div>
             </section>
         </main>
@@ -623,6 +565,24 @@ const stats = [
 }
 .video-card:hover .video-card__img {
     transform: scale(1.05);
+}
+.video-card__img--placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
+    color: #94a3b8;
+    object-fit: unset;
+}
+.video-empty {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #94a3b8;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.95rem;
 }
 
 /* ── Media Badges ── */

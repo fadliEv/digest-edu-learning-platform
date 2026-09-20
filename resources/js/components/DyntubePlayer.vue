@@ -5,17 +5,23 @@ const props = defineProps<{
     videoKey: string;
     iframeLink?: string | null;
     title?: string;
+    startPosition?: number;
 }>();
 
 const embedUrl = computed(() => {
     const key = props.iframeLink || props.videoKey;
     if (!key) return '';
 
-    if (key.startsWith('http://') || key.startsWith('https://')) {
-        return key;
+    let url = key.startsWith('http://') || key.startsWith('https://')
+        ? key
+        : `https://videos.dyntube.com/iframes/${key}`;
+
+    if (props.startPosition && props.startPosition > 0) {
+        const sep = url.includes('?') ? '&' : '?';
+        url = `${url}${sep}t=${props.startPosition}&start=${props.startPosition}#t=${props.startPosition}`;
     }
 
-    return `https://videos.dyntube.com/iframes/${key}`;
+    return url;
 });
 </script>
 

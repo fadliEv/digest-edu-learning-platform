@@ -452,8 +452,12 @@ function formatNum(n: number) {
             @close="isUploadModalOpen = false"
         />
 
-        <!-- ══ AI PROCESSING MODAL OVERLAY ══ -->
-        <ProcessingModal :show="isGeneratingQuiz" />
+         <!-- ══ AI PROCESSING MODAL OVERLAY ══ -->
+         <ProcessingModal
+             :show="isGeneratingQuiz"
+             title="Kuis AI sedang diproses di latar belakang"
+             description="Permintaan telah dikirim ke antrian. Google Gemini 2.0 Flash akan menganalisis naskah dan membuatkan 6 soal kuis evaluasi."
+         />
 
         <!-- ══ REUSABLE CONFIRM MODAL ══ -->
         <ConfirmModal

@@ -29,7 +29,7 @@ const props = defineProps<{
         correct_answer: string;
         order_number: number;
     }>;
-    objectives: Array<{ id: number; objective: string; order_number: number }>;
+    objectives: Array<{ id: number; objective_text: string; order_number: number }>;
     resume: { last_position: number; progress: number };
     bestScore: number | null;
     relatedVideos: Array<{
@@ -104,6 +104,23 @@ function retakeQuiz() {
     lastResult.value = null;
 }
 
+// ─── Watch-gating: quiz unlocks only after the user has watched enough ───────
+// Threshold: 90% of the video counts as "watched". Reactive so the quiz
+// unlocks live (without a page reload) once the watched position passes it.
+const WATCH_THRESHOLD = 0.9;
+const watchedSeconds = ref(props.resume.last_position || 0);
+const watchProgressPct = computed(() => {
+    const dur = props.video.duration_seconds || 0;
+    if (dur <= 0) return 0;
+    return Math.min(100, Math.round((watchedSeconds.value / dur) * 100));
+});
+const hasWatchedEnough = computed(() => {
+    const dur = props.video.duration_seconds || 0;
+    // If we don't know the duration, don't hard-lock the user out.
+    if (dur <= 0) return true;
+    return watchedSeconds.value >= dur * WATCH_THRESHOLD;
+});
+
 // ─── Resume / progress tracking ─────────────────────────────────────────────
 let resumeInterval: ReturnType<typeof setInterval> | null = null;
 let currentPos = props.resume.last_position || 15;
@@ -126,6 +143,7 @@ function handleWindowMessage(e: MessageEvent) {
             const time = data.currentTime ?? data.time;
             if (typeof time === 'number' && time > 0) {
                 currentPos = Math.round(time);
+                if (currentPos > watchedSeconds.value) watchedSeconds.value = currentPos;
             }
         }
     } catch {}
@@ -143,6 +161,7 @@ onMounted(() => {
         if (props.video.duration_seconds && currentPos > props.video.duration_seconds) {
             currentPos = props.video.duration_seconds;
         }
+        if (currentPos > watchedSeconds.value) watchedSeconds.value = currentPos;
         saveResume(currentPos);
     }, 5_000);
 });
@@ -190,6 +209,7 @@ const fallbackThumb = 'https://images.unsplash.com/photo-1576091160399-112ba8d25
                         :video-key="video.dyntube_video_id"
                         :iframe-link="video.dyntube_iframe_link"
                         :title="video.title"
+                        :start-position="resume.last_position"
                     />
                     <div v-else class="player-placeholder">
                         <Icon icon="lucide:video-off" width="48" height="48" />
@@ -271,7 +291,7 @@ const fallbackThumb = 'https://images.unsplash.com/photo-1576091160399-112ba8d25
                                 <div class="obj-check">
                                     <Icon icon="lucide:check" width="11" height="11" />
                                 </div>
-                                {{ obj.objective }}
+                                {{ obj.objective_text }}
                             </li>
                         </ul>
                     </div>
@@ -344,6 +364,16 @@ const fallbackThumb = 'https://images.unsplash.com/photo-1576091160399-112ba8d25
                             <Icon icon="lucide:refresh-cw" width="15" height="15" />
                             Ulangi Kuis
                         </button>
+                    </div>
+
+                    <!-- Quiz locked until the video has been watched enough -->
+                    <div v-else-if="!hasWatchedEnough" class="quiz-empty quiz-locked">
+                        <Icon icon="lucide:lock" width="32" height="32" />
+                        <p>Tonton video ini hingga selesai untuk membuka kuis.</p>
+                        <div class="quiz-lock-bar">
+                            <div class="quiz-lock-fill" :style="{ width: watchProgressPct + '%' }" />
+                        </div>
+                        <span class="quiz-lock-label">Progress menonton: {{ watchProgressPct }}% (minimal 90%)</span>
                     </div>
 
                     <!-- Active Quiz -->
@@ -694,6 +724,23 @@ const fallbackThumb = 'https://images.unsplash.com/photo-1576091160399-112ba8d25
 }
 .quiz-empty--processing { color: #0d9488; }
 .quiz-empty--error { color: #ef4444; }
+.quiz-locked { color: #64748b; }
+.quiz-lock-bar {
+    width: 100%;
+    max-width: 320px;
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 999px;
+    overflow: hidden;
+    margin-top: 4px;
+}
+.quiz-lock-fill {
+    height: 100%;
+    background: #14b8a6;
+    border-radius: 999px;
+    transition: width 0.4s ease;
+}
+.quiz-lock-label { font-size: 12px; color: #94a3b8; }
 .spinner {
     width: 32px;
     height: 32px;

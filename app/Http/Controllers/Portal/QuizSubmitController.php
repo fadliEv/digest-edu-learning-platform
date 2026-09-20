@@ -21,6 +21,19 @@ class QuizSubmitController extends Controller
     {
         $user = $request->user();
 
+        // ── Watch gate: quiz may only be submitted after watching the video ──
+        // Mirrors the frontend lock (90% of duration). Prevents bypassing the
+        // UI by POSTing directly to this endpoint.
+        if ($video->duration_seconds && $video->duration_seconds > 0) {
+            $resume = $video->resumes()->where('user_id', $user->id)->first();
+            $watched = $resume?->last_position ?? 0;
+            if ($watched < $video->duration_seconds * 0.9) {
+                return redirect()
+                    ->route('portal.video.watch', $video->id)
+                    ->with('error', 'Kamu harus menonton video ini hingga selesai sebelum mengerjakan kuis.');
+            }
+        }
+
         $validated = $request->validate([
             'answers'              => 'required|array',
             'answers.*.question_id' => 'required|integer|exists:questions,id',

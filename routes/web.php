@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\QuizController as AdminQuizController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\VideoController as AdminVideoController;
 use App\Http\Controllers\HomeDashboardController;
+use App\Http\Controllers\LandingController;
 use App\Http\Controllers\Portal\PortalProfileController;
 use App\Http\Controllers\Portal\QuizSubmitController;
 use App\Http\Controllers\Portal\VideoResumeController;
@@ -12,7 +13,7 @@ use App\Http\Controllers\Portal\VideoWatchController;
 use Illuminate\Support\Facades\Route;
 
 // ─── Public Landing Page ─────────────────────────────────────────────────────
-Route::inertia('/', 'Welcome')->name('home');
+Route::get('/', LandingController::class)->name('home');
 
 // ─── Authenticated User Routes ────────────────────────────────────────────────
 Route::middleware(['auth', 'verified'])->group(function () {
